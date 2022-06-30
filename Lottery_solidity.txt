@@ -1,0 +1,50 @@
+// SPDX-License-Identifier: GPL-3.0
+
+pragma solidity >=0.5.0 <=0.9.0;
+
+contract Lottery{
+    address public manager;
+    address payable [] public people;
+
+    constructor() {
+        manager=msg.sender; //a global variable
+        // address of our current account
+    }
+    // receive function can be used only once in the contract
+    // receive function is always marked as external and payable
+    // we can not pass anything in its arguments
+    receive () external payable {
+    // require is just a substitute of if else function
+       require(msg.value>=0.002 ether);
+       people.push(payable(msg.sender));
+    //  as it is a payable function it starts the transact button and
+    // we push the address of accounts giving ether in the people array  
+    }
+
+    function getBalance() public view returns(uint) {
+        // give the balance of account only when the current account is same as that of manager's account
+        require(msg.sender==manager);
+        return address(this).balance;
+        // return the balance of this contract
+    }
+    // now we need to make a function which randomly selects a person who is the winner of lottery
+    // this function is to generate a random number
+    function random() public view returns(uint256) {
+        return uint(keccak256(abi.encodePacked(block.difficulty,block.timestamp,people.length)));
+    }
+
+    function selectwinner() public {
+        require(msg.sender==manager);
+        require(people.length>=2);
+        uint256 r=random();
+        // value obtained from above random function
+        address payable winner;
+        uint256 ind=r%people.length;
+        // us value ko array ke index ke form mein convert kardiya
+        winner=people[ind];
+        // return winner;
+        winner.transfer(getBalance());
+        // now resetting the function that is putting the array size to 0
+        people=new address payable[](0);
+    }
+}
